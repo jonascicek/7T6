@@ -17,6 +17,7 @@ model Post {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   images      Image[]
+  items       PostItem[]
 }
 
 model Image {
@@ -25,4 +26,24 @@ model Image {
   postId    Int
   post      Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+}
+
+model PostItem {
+  id          Int             @id @default(autoincrement())
+  postId      Int
+  post        Post            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  ebayUrl     String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  images      PostItemImage[]
+}
+
+model PostItemImage {
+  id         Int      @id @default(autoincrement())
+  postItemId Int
+  postItem   PostItem @relation(fields: [postItemId], references: [id], onDelete: Cascade)
+  url        String
+  createdAt  DateTime @default(now())
 }

@@ -2,5 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-black text-white; font-family: 'Manrope', sans-serif; }
-h1, h2, h3, h4, h5 { font-family: 'Playfair Display', serif; }
+:root {
+	color-scheme: dark;
+}
+
+body {
+	@apply text-neutral-100 antialiased;
+	background:
+		radial-gradient(1200px 600px at 20% -10%, rgba(115, 115, 115, 0.15), transparent 55%),
+		radial-gradient(900px 500px at 80% 0%, rgba(64, 64, 64, 0.12), transparent 55%),
+		#050505;
+	font-family: 'Outfit', sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+	font-family: 'Outfit', sans-serif;
+}
+
+::selection {
+	background: #e5e5e5;
+	color: #0a0a0a;
+}
