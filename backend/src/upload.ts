@@ -19,6 +19,8 @@ export const storage = multer.diskStorage({
 })
 
 const allowedMimes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif'])
+const allowedExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif'])
+const allowedFieldName = /^(files|articleImages-\d+)$/
 
 export const uploadMiddleware = multer({
   storage,
@@ -27,10 +29,22 @@ export const uploadMiddleware = multer({
     files: 40,
   },
   fileFilter: (_req, file, cb) => {
+    if (!allowedFieldName.test(file.fieldname)) {
+      cb(new Error('INVALID_FILE_FIELD'))
+      return
+    }
+
     if (!allowedMimes.has(file.mimetype)) {
       cb(new Error('INVALID_FILE_TYPE'))
       return
     }
+
+    const ext = path.extname(path.basename(file.originalname)).toLowerCase()
+    if (!allowedExtensions.has(ext)) {
+      cb(new Error('INVALID_FILE_TYPE'))
+      return
+    }
+
     cb(null, true)
   },
 })

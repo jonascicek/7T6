@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
 import PageLayout from '../components/PageLayout'
+import api from '../lib/api'
 
 interface Image {
   id: number
@@ -22,14 +22,15 @@ export default function HomePage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    axios
+    api
       .get('/api/posts')
       .then((res) => {
         setPosts(res.data.posts || [])
         setLoading(false)
       })
-      .catch((err) => {
-        setError('Fehler beim Laden der Posts: ' + err.message)
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Unbekannter Fehler'
+        setError('Fehler beim Laden der Posts: ' + message)
         setLoading(false)
       })
   }, [])

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import axios from 'axios'
 import PageLayout from '../components/PageLayout'
+import api from '../lib/api'
 
 interface Image {
   id: number
@@ -33,14 +33,15 @@ export default function PostDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   useEffect(() => {
-    axios
+    api
       .get(`/api/posts/${id}`)
       .then((res) => {
         setPost(res.data.post)
         setLoading(false)
       })
-      .catch((err) => {
-        setError('Fehler beim Laden des Posts: ' + err.message)
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Unbekannter Fehler'
+        setError('Fehler beim Laden des Posts: ' + message)
         setLoading(false)
       })
   }, [id])

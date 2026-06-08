@@ -55,6 +55,7 @@ app.use(
       }
       return callback(new Error('Origin not allowed by CORS'))
     },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   })
 )
@@ -505,6 +506,10 @@ app.use((err: unknown, _req: express.Request, res: express.Response, next: expre
 
   if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
     return res.status(400).json({ ok: false, error: 'Nur JPG, PNG, WebP oder AVIF Bilder erlaubt' })
+  }
+
+  if (err instanceof Error && err.message === 'INVALID_FILE_FIELD') {
+    return res.status(400).json({ ok: false, error: 'Ungueltiges Upload-Feld' })
   }
 
   return next(err)
