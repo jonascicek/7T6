@@ -116,6 +116,13 @@ type ArticleDraft = {
   ebayUrl: string | null
 }
 
+type ItemUpdateDraft = {
+  id: number
+  title: string
+  description: string
+  ebayUrl: string | null
+}
+
 const normalizeOptionalHttpUrl = (value: unknown) => {
   const raw = normalizeText(value)
   if (!raw) return null
@@ -172,6 +179,38 @@ const parseArticleDrafts = (value: unknown): ArticleDraft[] | null => {
   } catch {
     return null
   }
+}
+
+const parseItemUpdateDrafts = (value: unknown): ItemUpdateDraft[] | null => {
+  if (typeof value !== 'object' || !value || !Array.isArray(value)) {
+    return null
+  }
+
+  const drafts: ItemUpdateDraft[] = []
+  for (const item of value) {
+    const idValue = (item as { id?: unknown })?.id
+    const id = typeof idValue === 'number' ? idValue : Number(idValue)
+    const title = normalizeText((item as { title?: unknown })?.title)
+    const description = normalizeText((item as { description?: unknown })?.description)
+    const rawEbayUrl = (item as { ebayUrl?: unknown })?.ebayUrl
+    const ebayUrl = normalizeOptionalHttpUrl(rawEbayUrl)
+
+    if (!Number.isInteger(id) || id <= 0 || !title || !description) {
+      return null
+    }
+
+    if (typeof rawEbayUrl === 'string' && normalizeText(rawEbayUrl) && !ebayUrl) {
+      return null
+    }
+
+    if (title.length > 140 || description.length > 4000) {
+      return null
+    }
+
+    drafts.push({ id, title, description, ebayUrl })
+  }
+
+  return drafts.length > 0 ? drafts : null
 }
 
 const postInclude = {
@@ -446,6 +485,75 @@ app.get('/api/posts/:id', async (req, res) => {
   }
 })
 
+// POST /api/post-items/:itemId/images — add images to an existing article
+app.post('/api/post-items/:itemId/images', requireAdminAuth, uploadMiddleware.array('files', 20), async (req, res) => {
+  try {
+    const itemId = parsePostId(req.params.itemId)
+    if (!itemId) {
+      return res.status(400).json({ ok: false, error: 'invalid post item id' })
+    }
+
+    const files = (req.files as Express.Multer.File[]) || []
+    if (files.length === 0) {
+      return res.status(400).json({ ok: false, error: 'mindestens ein Bild ist erforderlich' })
+    }
+
+    const item = await prisma.postItem.findUnique({ where: { id: itemId }, select: { id: true } })
+    if (!item) {
+      return res.status(404).json({ ok: false, error: 'post item not found' })
+    }
+
+    await prisma.postItemImage.createMany({
+      data: files.map((file) => ({
+        postItemId: itemId,
+        url: '/uploads/' + file.filename,
+      })),
+    })
+
+    const updatedItem = await prisma.postItem.findUnique({
+      where: { id: itemId },
+      include: { images: { orderBy: { createdAt: 'asc' } } },
+    })
+
+    return res.json({ ok: true, item: updatedItem })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ ok: false, error: 'item image upload failed' })
+  }
+})
+
+// DELETE /api/post-items/:itemId/images/:imageId — remove one image from an article
+app.delete('/api/post-items/:itemId/images/:imageId', requireAdminAuth, async (req, res) => {
+  try {
+    const itemId = parsePostId(req.params.itemId)
+    const imageId = parsePostId(req.params.imageId)
+    if (!itemId || !imageId) {
+      return res.status(400).json({ ok: false, error: 'invalid id' })
+    }
+
+    const image = await prisma.postItemImage.findUnique({
+      where: { id: imageId },
+      select: { id: true, postItemId: true },
+    })
+
+    if (!image || image.postItemId !== itemId) {
+      return res.status(404).json({ ok: false, error: 'image not found' })
+    }
+
+    await prisma.postItemImage.delete({ where: { id: imageId } })
+
+    const updatedItem = await prisma.postItem.findUnique({
+      where: { id: itemId },
+      include: { images: { orderBy: { createdAt: 'asc' } } },
+    })
+
+    return res.json({ ok: true, item: updatedItem })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ ok: false, error: 'item image delete failed' })
+  }
+})
+
 // PUT /api/posts/:id — update title/description
 app.put('/api/posts/:id', requireAdminAuth, async (req, res) => {
   try {
@@ -459,11 +567,58 @@ app.put('/api/posts/:id', requireAdminAuth, async (req, res) => {
       return res.status(400).json({ ok: false, error: validated.error })
     }
 
-    const post = await prisma.post.update({
-      where: { id },
-      data: { title: validated.title, description: validated.description },
-      include: postInclude,
-    })
+    const itemDrafts = typeof req.body?.items === 'undefined' ? null : parseItemUpdateDrafts(req.body.items)
+    if (typeof req.body?.items !== 'undefined' && !itemDrafts) {
+      return res.status(400).json({ ok: false, error: 'invalid items payload' })
+    }
+
+    let post
+    if (itemDrafts) {
+      const existingItems = await prisma.postItem.findMany({
+        where: { postId: id },
+        select: { id: true },
+      })
+
+      const existingIds = existingItems.map((item) => item.id).sort((a, b) => a - b)
+      const draftIds = itemDrafts.map((item) => item.id).sort((a, b) => a - b)
+
+      if (existingIds.length !== draftIds.length || existingIds.some((itemId, index) => itemId !== draftIds[index])) {
+        return res.status(400).json({ ok: false, error: 'items must match existing article ids' })
+      }
+
+      post = await prisma.$transaction(async (tx) => {
+        await tx.post.update({
+          where: { id },
+          data: { title: validated.title, description: validated.description },
+        })
+
+        for (const draft of itemDrafts) {
+          await tx.postItem.update({
+            where: { id: draft.id },
+            data: {
+              title: draft.title,
+              description: draft.description,
+              ebayUrl: draft.ebayUrl,
+            },
+          })
+        }
+
+        return tx.post.findUnique({
+          where: { id },
+          include: postInclude,
+        })
+      })
+    } else {
+      post = await prisma.post.update({
+        where: { id },
+        data: { title: validated.title, description: validated.description },
+        include: postInclude,
+      })
+    }
+
+    if (!post) {
+      return res.status(404).json({ ok: false, error: 'post not found' })
+    }
     res.json({ ok: true, post })
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
