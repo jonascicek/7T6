@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
 import PageLayout from '../components/PageLayout'
 import api from '../lib/api'
+import { Link, useLocation } from '../lib/router'
 
 interface Image {
   id: number
@@ -26,13 +26,20 @@ interface Post {
 }
 
 export default function PostDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { pathname } = useLocation()
+  const id = pathname.split('/')[2] || ''
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   useEffect(() => {
+    if (!id) {
+      setError('Post nicht gefunden')
+      setLoading(false)
+      return
+    }
+
     api
       .get(`/api/posts/${id}`)
       .then((res) => {

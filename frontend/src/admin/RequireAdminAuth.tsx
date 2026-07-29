@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
 import api from '../lib/api'
+import { Navigate } from '../lib/router'
 
 type AuthState = 'checking' | 'ok' | 'unauthorized'
 

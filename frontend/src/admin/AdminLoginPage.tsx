@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import PageLayout from '../components/PageLayout'
+import { useNavigate } from '../lib/router'
 
 export default function AdminLoginPage() {
   const navigate = useNavigate()

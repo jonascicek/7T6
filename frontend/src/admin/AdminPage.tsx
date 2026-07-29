@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import AdminForm from './AdminForm'
 import AdminPosts from './AdminPosts'
-import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import PageLayout from '../components/PageLayout'
+import { useNavigate } from '../lib/router'
 
 export default function AdminPage() {
   const navigate = useNavigate()

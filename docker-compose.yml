@@ -10,13 +10,12 @@ services:
       - ./backend/.env
     environment:
       - NODE_ENV=production
-      - CORS_ORIGINS=http://localhost,http://localhost:80
     volumes:
       # Persist SQLite database and uploads outside container
       - db-data:/app/prisma
       - uploads-data:/app/uploads
-    ports:
-      - "4000:4000"
+    expose:
+      - "4000"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
       interval: 30s

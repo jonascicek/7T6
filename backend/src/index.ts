@@ -45,7 +45,8 @@ const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '2h'
 const adminEmail = typeof process.env.ADMIN_EMAIL === 'string'
   ? process.env.ADMIN_EMAIL.replace(/\s+/g, ' ').trim().toLowerCase()
   : ''
-const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH || ''
+// Support both raw "$2b$..." and compose-escaped "$$2b$$..." hash formats.
+const adminPasswordHash = (process.env.ADMIN_PASSWORD_HASH || '').replace(/\$\$/g, '$')
 const jwtCookieName = 'admin_token'
 const tokenMaxAgeMsRaw = Number(process.env.JWT_MAX_AGE_MS || 2 * 60 * 60 * 1000)
 const tokenMaxAgeMs = Number.isFinite(tokenMaxAgeMsRaw) && tokenMaxAgeMsRaw > 0
@@ -899,6 +900,10 @@ app.delete('/api/posts/:id', validateOriginHeader, requireAdminAuth, async (req,
 
 // Error handler for Multer-specific errors and known error types
 app.use((err: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (err instanceof Error && err.message === 'Origin not allowed by CORS') {
+    return res.status(403).json({ ok: false, error: 'Origin not allowed' })
+  }
+
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ ok: false, error: 'Datei zu gross (max 20MB pro Bild)' })

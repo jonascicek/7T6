@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import PageLayout from '../components/PageLayout'
 import api from '../lib/api'
+import { Link } from '../lib/router'
 
 interface Image {
   id: number

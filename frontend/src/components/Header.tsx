@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation } from '../lib/router'
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
