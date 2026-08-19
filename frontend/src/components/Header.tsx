@@ -8,16 +8,16 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-neutral-900">
       <nav className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="relative flex items-center justify-end h-20">
+        <div className="relative flex items-center justify-end h-24 md:h-28">
           <Link
             to="/"
-            className="absolute left-1/2 -translate-x-1/2 inline-flex items-center"
+            className="absolute left-1/2 -translate-x-1/2 inline-flex items-center justify-center h-[68px] w-[68px] md:h-[84px] md:w-[84px] overflow-hidden"
             aria-label="Zur Startseite"
           >
             <img
               src="/logo-7t6.jpeg"
               alt="7T6 Logo"
-              className="h-9 md:h-10 w-auto"
+              className="h-full w-full object-contain scale-[1.42]"
             />
           </Link>
 
@@ -29,14 +29,6 @@ export default function Header() {
               }`}
             >
               JOURNAL
-            </Link>
-            <Link
-              to="/admin/login"
-              className={`text-sm tracking-[0.2em] transition-colors ${
-                location.pathname.startsWith('/admin') ? 'text-white' : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              ADMIN
             </Link>
           </div>
 
@@ -55,13 +47,6 @@ export default function Header() {
           <div className="md:hidden pb-6 flex flex-col gap-4 text-sm tracking-[0.18em]">
             <Link to="/" className="text-neutral-300 hover:text-white" onClick={() => setMobileOpen(false)}>
               JOURNAL
-            </Link>
-            <Link
-              to="/admin/login"
-              className="text-neutral-300 hover:text-white"
-              onClick={() => setMobileOpen(false)}
-            >
-              ADMIN
             </Link>
           </div>
         )}

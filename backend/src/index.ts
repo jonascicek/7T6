@@ -954,22 +954,29 @@ app.use(
   })
 )
 
-const server = app.listen(port, () => {
-  logger.info(`Backend running on http://localhost:${port}`, {
-    port,
-    nodeEnv: process.env.NODE_ENV,
-    timestamp: new Date().toISOString(),
+export const startServer = (listenPort = port) => {
+  const server = app.listen(listenPort, () => {
+    logger.info(`Backend running on http://localhost:${listenPort}`, {
+      port: listenPort,
+      nodeEnv: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+    })
   })
-})
+
+  return server
+}
 
 const shutdown = async () => {
   logger.info('Shutdown signal received, closing gracefully...')
   await prisma.$disconnect()
-  server.close(() => {
-    logger.info('Server closed')
-    process.exit(0)
-  })
+  process.exit(0)
 }
 
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
+
+if (require.main === module) {
+  startServer(port)
+}
+
+export { app, prisma }

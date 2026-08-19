@@ -648,9 +648,11 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ### Admin Login
 1. Backend & Frontend starten
-2. Browser: `http://localhost:5173/admin/login`
-3. Credentials eingeben (aus `.env`)
-4. → Redirect zu `/admin` (Post-Management)
+2. In `frontend/.env` den internen Admin-Pfad setzen (`VITE_ADMIN_ROUTE_SEGMENT`)
+3. Browser: `http://localhost:5173/<VITE_ADMIN_ROUTE_SEGMENT>`
+  - Beispiel mit Standardwert: `http://localhost:5173/zugang-7t6-admin`
+4. Credentials eingeben (aus `.env`)
+5. → Redirect zu `/<VITE_ADMIN_ROUTE_SEGMENT>/panel` (Post-Management)
 
 ---
 
@@ -670,9 +672,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ### Workflow 2: Einzelne Artikel-Images hochladen
 1. Admin Form: Pro Artikel gibt es eigenes Image-Upload-Feld
-2. Max 40 Dateien pro Collection (Multer Limit)
-3. Server speichert in `/backend/uploads/`
-4. Path: `/uploads/TIMESTAMP-FILENAME.jpg`
+2. Reihenfolge im Formular mit "Hoch/Runter" festlegen
+3. Max 40 Dateien pro Collection (Multer Limit)
+4. Server speichert in `/backend/uploads/`
+5. Path: `/uploads/TIMESTAMP-FILENAME.jpg`
 
 ### Workflow 3: eBay Links pro Artikel
 1. Admin Form: Optional eBay-URL pro Artikel eingeben

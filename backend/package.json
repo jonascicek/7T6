@@ -2,10 +2,13 @@
   "name": "7t6-blog-backend",
   "version": "0.0.1",
   "private": true,
+  "type": "commonjs",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test:smoke": "npm run build && node --test test/smoke.test.js",
+    "test:browser": "npm run build && node --test test/browser-smoke.test.js"
   },
   "dependencies": {
     "@prisma/client": "6.3.0",
@@ -27,6 +30,7 @@
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.9.2",
+    "playwright": "^1.55.0",
     "prisma": "6.3.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3"

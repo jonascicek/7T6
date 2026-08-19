@@ -38,6 +38,8 @@ type UpdateItemPayload = {
   ebayUrl: string
 }
 
+const getFileKey = (file: File) => `${file.name}-${file.size}-${file.lastModified}`
+
 export default function AdminPosts() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
@@ -50,6 +52,7 @@ export default function AdminPosts() {
   const [busyItemId, setBusyItemId] = useState<number | null>(null)
   const [deletingImageId, setDeletingImageId] = useState<number | null>(null)
   const [pendingDeleteImageIds, setPendingDeleteImageIds] = useState<Record<number, number[]>>({})
+  const [pendingUploadFilesByItemId, setPendingUploadFilesByItemId] = useState<Record<number, File[]>>({})
 
   useEffect(() => {
     api
@@ -78,6 +81,7 @@ export default function AdminPosts() {
       }))
     )
     setPendingDeleteImageIds({})
+    setPendingUploadFilesByItemId({})
   }
 
   const cancelEdit = () => {
@@ -86,6 +90,62 @@ export default function AdminPosts() {
     setEditDescription('')
     setEditItems([])
     setPendingDeleteImageIds({})
+    setPendingUploadFilesByItemId({})
+  }
+
+  const queueUploadFiles = (itemId: number, files: File[]) => {
+    if (files.length === 0) return
+
+    setPendingUploadFilesByItemId((prev) => ({
+      ...prev,
+      [itemId]: [...(prev[itemId] || []), ...files],
+    }))
+    setStatus('Bilder hinzugefuegt. Reihenfolge kann vor Upload angepasst werden.')
+  }
+
+  const moveUploadFile = (itemId: number, fromIndex: number, toIndex: number) => {
+    setPendingUploadFilesByItemId((prev) => {
+      const current = prev[itemId] || []
+      if (fromIndex < 0 || fromIndex >= current.length || toIndex < 0 || toIndex >= current.length) {
+        return prev
+      }
+
+      const nextFiles = [...current]
+      const [file] = nextFiles.splice(fromIndex, 1)
+      nextFiles.splice(toIndex, 0, file)
+
+      return {
+        ...prev,
+        [itemId]: nextFiles,
+      }
+    })
+  }
+
+  const removeUploadFile = (itemId: number, fileIndex: number) => {
+    setPendingUploadFilesByItemId((prev) => {
+      const current = prev[itemId] || []
+      const next = current.filter((_, index) => index !== fileIndex)
+
+      if (next.length === 0) {
+        const copy = { ...prev }
+        delete copy[itemId]
+        return copy
+      }
+
+      return {
+        ...prev,
+        [itemId]: next,
+      }
+    })
+  }
+
+  const clearUploadQueue = (itemId: number) => {
+    setPendingUploadFilesByItemId((prev) => {
+      if (!(itemId in prev)) return prev
+      const copy = { ...prev }
+      delete copy[itemId]
+      return copy
+    })
   }
 
   const isImageQueuedForDelete = (itemId: number, imageId: number) =>
@@ -186,7 +246,8 @@ export default function AdminPosts() {
     }
   }
 
-  const uploadItemImages = async (itemId: number, files: File[]) => {
+  const uploadItemImages = async (itemId: number) => {
+    const files = pendingUploadFilesByItemId[itemId] || []
     if (files.length === 0 || busyItemId !== null) return
 
     const fd = new FormData()
@@ -208,6 +269,7 @@ export default function AdminPosts() {
             : item
         )
       )
+      clearUploadQueue(itemId)
       setStatus('Bild(er) hinzugefuegt.')
     } catch (err: any) {
       const msg = err?.response?.data?.error || err?.message || 'unknown'
@@ -386,12 +448,68 @@ export default function AdminPosts() {
                                 multiple
                                 disabled={busyItemId === item.id || isSaving}
                                 onChange={(e) => {
-                                  const files = e.target.files ? Array.from(e.target.files) : []
-                                  void uploadItemImages(item.id, files)
+                                    const files = e.target.files ? Array.from(e.target.files) : []
+                                    queueUploadFiles(item.id, files)
                                   e.currentTarget.value = ''
                                 }}
                                 className="w-full text-sm text-neutral-300 file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-white file:text-black file:cursor-pointer hover:file:bg-neutral-200 file:transition disabled:opacity-50 disabled:cursor-not-allowed"
                               />
+                                {(pendingUploadFilesByItemId[item.id] || []).length > 0 && (
+                                  <div className="space-y-2 border border-neutral-800 bg-black p-3">
+                                    <p className="text-xs text-neutral-500">Upload-Reihenfolge</p>
+                                    {(pendingUploadFilesByItemId[item.id] || []).map((file, fileIndex) => (
+                                      <div key={`${getFileKey(file)}-${fileIndex}`} className="flex items-center justify-between gap-2">
+                                        <p className="truncate text-xs text-neutral-300">
+                                          {fileIndex + 1}. {file.name}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() => moveUploadFile(item.id, fileIndex, fileIndex - 1)}
+                                            disabled={fileIndex === 0 || busyItemId === item.id || isSaving}
+                                            className="px-2 py-1 border border-neutral-700 text-[10px] text-neutral-300 hover:border-white hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                          >
+                                            Hoch
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => moveUploadFile(item.id, fileIndex, fileIndex + 1)}
+                                            disabled={fileIndex === (pendingUploadFilesByItemId[item.id] || []).length - 1 || busyItemId === item.id || isSaving}
+                                            className="px-2 py-1 border border-neutral-700 text-[10px] text-neutral-300 hover:border-white hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                          >
+                                            Runter
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => removeUploadFile(item.id, fileIndex)}
+                                            disabled={busyItemId === item.id || isSaving}
+                                            className="px-2 py-1 border border-red-700 text-[10px] text-red-300 hover:bg-red-900/60 disabled:opacity-40 disabled:cursor-not-allowed"
+                                          >
+                                            Entfernen
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => void uploadItemImages(item.id)}
+                                        disabled={busyItemId !== null || isSaving}
+                                        className="px-3 py-2 bg-white text-black text-xs tracking-[0.14em] hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                      >
+                                        In Reihenfolge hochladen
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => clearUploadQueue(item.id)}
+                                        disabled={busyItemId === item.id || isSaving}
+                                        className="px-3 py-2 border border-neutral-700 text-neutral-300 text-xs hover:border-white hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                      >
+                                        Warteliste leeren
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               <div className="flex items-center justify-between">
                                 {busyItemId === item.id ? (
                                   <p className="text-xs text-neutral-500">Bilder werden verarbeitet...</p>

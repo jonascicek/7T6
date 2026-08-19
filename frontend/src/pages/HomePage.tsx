@@ -16,10 +16,17 @@ interface Post {
   createdAt: string
 }
 
+type NewsletterStatus = {
+  type: 'idle' | 'success' | 'error'
+  message: string
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [newsletterStatus, setNewsletterStatus] = useState<NewsletterStatus>({ type: 'idle', message: '' })
 
   useEffect(() => {
     api
@@ -34,6 +41,19 @@ export default function HomePage() {
         setLoading(false)
       })
   }, [])
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const normalized = newsletterEmail.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      setNewsletterStatus({ type: 'error', message: 'Bitte eine gültige E-Mail eingeben.' })
+      return
+    }
+
+    setNewsletterStatus({ type: 'success', message: 'Danke! Wir informieren dich bald über neue Drops.' })
+    setNewsletterEmail('')
+  }
 
   if (error) {
     return (
@@ -56,7 +76,6 @@ export default function HomePage() {
 
   return (
     <PageLayout withFooter containerClassName="bg-neutral-950 text-white">
-
       {featured && (
         <section className="relative h-[calc(100vh-5rem)] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0">
@@ -106,7 +125,7 @@ export default function HomePage() {
             <p className="text-sm tracking-[0.22em] uppercase text-neutral-500 mb-4">7T6 Journal</p>
             <h1 className="font-display text-5xl md:text-7xl text-white mb-6">Minimal. Bold. Editorial.</h1>
             <p className="max-w-2xl mx-auto text-neutral-300">
-              Erstelle den ersten Post, um die Startseite mit deiner aktuellen Kollektion zu fuellen.
+              Erstelle den ersten Post, um die Startseite mit deiner aktuellen Kollektion zu füllen.
             </p>
           </div>
         </section>
@@ -122,18 +141,19 @@ export default function HomePage() {
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-2 border-neutral-700 border-t-white" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="animate-pulse border border-neutral-900 bg-neutral-950/70 p-4 md:p-5">
+                  <div className="h-72 bg-neutral-800 mb-6" />
+                  <div className="h-4 bg-neutral-800 w-2/3 mb-3" />
+                  <div className="h-4 bg-neutral-800 mb-2" />
+                  <div className="h-4 bg-neutral-800 w-4/5" />
+                </div>
+              ))}
             </div>
           ) : posts.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-neutral-500 mb-6">Noch keine Posts verfuegbar.</p>
-              <Link
-                to="/admin/login"
-                className="inline-block px-8 py-3 bg-white text-black text-sm tracking-[0.18em] hover:bg-neutral-200 transition"
-              >
-                Ersten Post erstellen
-              </Link>
+            <div className="text-center py-20 border border-neutral-900 bg-neutral-950/40">
+              <p className="text-neutral-500">Noch keine Posts verfügbar.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
@@ -196,19 +216,30 @@ export default function HomePage() {
           <p className="text-neutral-400 mb-10 text-lg">
             Abonniere unseren Newsletter für exklusive Updates.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Deine E-Mail"
-              className="flex-1 px-6 py-4 bg-neutral-900 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-400 transition"
-            />
-            <button className="px-10 py-4 bg-white text-black font-medium tracking-[0.16em] hover:bg-neutral-200 transition whitespace-nowrap">
-              Abonnieren
-            </button>
-          </div>
+          <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                type="email"
+                value={newsletterEmail}
+                onChange={(e) => {
+                  setNewsletterEmail(e.target.value)
+                  if (newsletterStatus.type !== 'idle') setNewsletterStatus({ type: 'idle', message: '' })
+                }}
+                placeholder="Deine E-Mail"
+                className="flex-1 px-6 py-4 bg-neutral-900 border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-400 transition"
+              />
+              <button className="px-10 py-4 bg-white text-black font-medium tracking-[0.16em] hover:bg-neutral-200 transition whitespace-nowrap">
+                Abonnieren
+              </button>
+            </div>
+            {newsletterStatus.message && (
+              <p className={`mt-4 text-sm ${newsletterStatus.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                {newsletterStatus.message}
+              </p>
+            )}
+          </form>
         </div>
       </section>
-
     </PageLayout>
   )
 }

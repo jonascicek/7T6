@@ -18,7 +18,7 @@ export default function PageLayout({
   return (
     <div className={`min-h-screen ${containerClassName}`.trim()}>
       <Header />
-      <main className={`pt-20 ${mainClassName}`.trim()}>{children}</main>
+      <main className={`pt-24 md:pt-28 ${mainClassName}`.trim()}>{children}</main>
       {withFooter ? <Footer /> : null}
     </div>
   )

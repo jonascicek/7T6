@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Install dependencies first (cached layer if package.json unchanged)
 COPY package*.json ./
-RUN npm ci
+RUN npm config set fund false && npm config set audit false && npm ci --loglevel warn
 
 # Copy Prisma schema and generate types BEFORE compiling TypeScript
 COPY prisma ./prisma
@@ -23,7 +23,7 @@ WORKDIR /app
 
 # Install only production dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm config set fund false && npm config set audit false && npm ci --omit=dev --loglevel warn
 
 # Copy compiled JS from builder stage
 COPY --from=builder /app/dist ./dist

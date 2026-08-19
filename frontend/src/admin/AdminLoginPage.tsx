@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import api from '../lib/api'
 import PageLayout from '../components/PageLayout'
 import { useNavigate } from '../lib/router'
+import { adminPanelPath } from './adminRoutes'
 
 export default function AdminLoginPage() {
   const navigate = useNavigate()
@@ -25,7 +26,7 @@ export default function AdminLoginPage() {
         email,
         password,
       })
-      navigate('/admin', { replace: true })
+      navigate(adminPanelPath, { replace: true })
     } catch (err: any) {
       const message = err?.response?.data?.error || err?.message || 'Login fehlgeschlagen'
       setStatus(message)
@@ -39,7 +40,8 @@ export default function AdminLoginPage() {
       <div className="px-6">
         <div className="max-w-md mx-auto border border-neutral-800 bg-black p-8 md:p-10">
           <p className="text-sm tracking-[0.18em] text-neutral-500 mb-4 uppercase">Admin Login</p>
-          <h1 className="font-display text-5xl tracking-wide text-white mb-8">Anmelden</h1>
+          <h1 className="font-display text-5xl tracking-wide text-white mb-4">Anmelden</h1>
+          <p className="text-sm text-neutral-400 mb-8">Nutze deine Admin-Zugangsdaten, um neue Kollektionen zu veröffentlichen.</p>
 
           <form onSubmit={submit} className="space-y-6">
             <div>
@@ -52,6 +54,7 @@ export default function AdminLoginPage() {
                 className="w-full bg-neutral-900 border border-neutral-700 px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-400 transition"
                 placeholder="admin@example.com"
                 required
+                autoFocus
               />
             </div>
 
@@ -73,7 +76,7 @@ export default function AdminLoginPage() {
               disabled={isLoading}
               className="w-full px-8 py-4 bg-white text-black font-medium tracking-[0.2em] hover:bg-neutral-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'PRUEFE...' : 'LOGIN'}
+              {isLoading ? 'PRÜFE...' : 'LOGIN'}
             </button>
 
             {status && (

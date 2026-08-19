@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../lib/api'
 import { Navigate } from '../lib/router'
+import { adminLoginPath } from './adminRoutes'
 
 type AuthState = 'checking' | 'ok' | 'unauthorized'
 
@@ -27,7 +28,7 @@ export default function RequireAdminAuth({ children }: RequireAdminAuthProps) {
   }
 
   if (authState === 'unauthorized') {
-    return <Navigate to="/admin/login" replace />
+    return <Navigate to={adminLoginPath} replace />
   }
 
   return <>{children}</>

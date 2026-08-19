@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="bg-black/80 text-white border-t border-neutral-800">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div>
             <h3 className="font-display text-4xl tracking-[0.2em] mb-4">7T6</h3>
             <p className="text-neutral-400 text-sm leading-relaxed">
@@ -22,9 +22,20 @@ export default function Footer() {
                   Journal
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-medium tracking-[0.18em] mb-4 text-neutral-300">RECHTLICHES</h4>
+            <ul className="space-y-3">
               <li>
-                <Link to="/admin/login" className="text-sm text-neutral-400 hover:text-white transition">
-                  Admin
+                <Link to="/impressum" className="text-sm text-neutral-400 hover:text-white transition">
+                  Impressum
+                </Link>
+              </li>
+              <li>
+                <Link to="/datenschutz" className="text-sm text-neutral-400 hover:text-white transition">
+                  Datenschutz
                 </Link>
               </li>
             </ul>
