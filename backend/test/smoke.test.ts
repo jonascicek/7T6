@@ -82,6 +82,27 @@ test('smoke flow: admin login, create post with image, retrieve post', async (t)
     assert.equal(createBody.ok, true)
     assert.ok(createBody.post?.id)
 
+    const sameOriginForm = new FormData()
+    sameOriginForm.append('title', 'Same Origin Upload Test')
+    sameOriginForm.append('description', 'Created without Origin header on same-origin request')
+    sameOriginForm.append(
+      'files',
+      new Blob([fs.readFileSync(imagePath)], { type: 'image/png' }),
+      'same-origin-upload.png'
+    )
+    sameOriginForm.append('articles', JSON.stringify([{ title: 'Same Origin Item', description: 'Body', ebayUrl: '' }]))
+
+    const sameOriginResponse = await fetch(`${baseUrl}/api/posts`, {
+      method: 'POST',
+      headers: {
+        cookie: cookieHeader,
+        host: 'localhost:5173',
+      },
+      body: sameOriginForm,
+    })
+
+    assert.equal(sameOriginResponse.status, 200, `same-origin upload failed: ${await sameOriginResponse.text()}`)
+
     const getResponse = await fetch(`${baseUrl}/api/posts/${createBody.post.id}`)
     assert.equal(getResponse.status, 200)
     const getBody = await getResponse.json()

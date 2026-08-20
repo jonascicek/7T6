@@ -8,7 +8,7 @@ const baseURL = rawBaseUrl === '' ? '' : rawBaseUrl.replace(/\/+$/, '')
 const api = axios.create({
   baseURL,
   withCredentials: true,
-  timeout: 15000,
+  timeout: 120000,
 })
 
 export default api
