@@ -31,7 +31,7 @@ services:
     container_name: 7t6-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       backend:
         condition: service_healthy
