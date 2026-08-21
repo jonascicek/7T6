@@ -68,8 +68,10 @@ export const validateUploadedFile = async (
 export const uploadMiddleware = multer({
   storage,
   limits: {
-    fileSize: 20 * 1024 * 1024,
-    files: 40,
+    fileSize: 20 * 1024 * 1024,  // 20MB pro Datei
+    files: 40,                    // max 40 Dateien
+    fieldSize: 1 * 1024 * 1024,   // 1MB für non-file fields
+    fields: 50,                   // max 50 fields
   },
   fileFilter: (_req, file, cb) => {
     if (!allowedFieldName.test(file.fieldname)) {
